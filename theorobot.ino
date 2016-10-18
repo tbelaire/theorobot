@@ -110,9 +110,38 @@ void demoTwo()
     digitalWrite(in4, LOW);  
 }
 
-int going = 0;
+u8 going = 0;
 u8 stopped = 1;
+long last_tick = 0;
+i8 trim = -30;
 
+void stop_motor() {
+    stopped = 1;
+    going = 0;
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, LOW);
+}
+
+void go_straight() {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+    analogWrite(enA, 200 + trim);
+    analogWrite(enB, 200);
+}
+
+void go_left() {
+    digitalWrite(in2, LOW);
+    digitalWrite(in1, HIGH);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+    analogWrite(enA, 200 + trim);
+    analogWrite(enB, 200);
+
+}
 void loop()
 {
 
@@ -142,25 +171,44 @@ void loop()
         Serial.print(distance);
         Serial.println(" cm");
     }
-    if( should_go != going ) {
-        if (should_go == 1) {
-            digitalWrite(in1, LOW);
-            digitalWrite(in2, HIGH);
-            digitalWrite(in3, LOW);
-            digitalWrite(in4, HIGH);
-            analogWrite(enA, 200);
-            analogWrite(enB, 200);
-            BTSerial.println("Going");
-            going = 1;
-        } else {
-            digitalWrite(in1, LOW);
-            digitalWrite(in2, HIGH);
-            digitalWrite(in3, HIGH);
-            digitalWrite(in4, LOW);
-            analogWrite(enA, 200);
-            analogWrite(enB, 200);
-            BTSerial.println("Not Going");
-            going = 0;
+    int next_char = BTSerial.read();
+    if( next_char == 'S' ) {
+        stop_motor();
+        BTSerial.println("Stopped");
+    }
+    if( next_char == 'G' ) {
+        stopped = 0;
+        going = 0;
+        should_go = 1;
+        BTSerial.println("Going");
+    }
+    if( next_char == '+' ) {
+        if(trim < 50) {
+            trim += 5;
+        }
+        BTSerial.print("trim");
+        BTSerial.print(trim);
+        BTSerial.println("");
+    }
+    if( next_char == '-' ) {
+        if(trim > -50) {
+            trim -= 5;
+        }
+        BTSerial.print("trim");
+        BTSerial.print(trim);
+        BTSerial.println("");
+    }
+    if( !stopped ) {
+        if( should_go != going ) {
+            if (should_go == 1) {
+                go_straight();
+                BTSerial.println("Going");
+                going = 1;
+            } else {
+                go_left();
+                BTSerial.println("Turning");
+                going = 0;
+            }
         }
     }
     delay(50);
