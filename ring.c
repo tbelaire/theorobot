@@ -30,3 +30,15 @@ void ringbuff_append( struct ringbuff* rb, char* data ) {
         data++;
     }
 }
+
+u8 ringbuff_empty( struct ringbuff* rb ) {
+    u8 Result = rb->size == 0;
+
+    return(Result);
+}
+
+u8 ringbuff_full( struct ringbuff* rb ) {
+    u8 Result = rb->size == rb->cap;
+
+    return(Result);
+}
