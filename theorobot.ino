@@ -6,13 +6,13 @@
 
 // connect motor controller pins to Arduino digital pins
 // motor one
-const int enA = 10;
+const int enA = 6;
 const int in1 = 9;
 const int in2 = 8;
 // motor two
 const int enB = 5;
 const int in3 = 7;
-const int in4 = 6;
+const int in4 = 10;
 
 const int sonar1_trig = 12;
 const int sonar1_echo = 11;
@@ -31,6 +31,12 @@ char outbuf[QUEUE_SIZE];
 
 struct ringbuff in_ring;
 struct ringbuff out_ring;
+
+u8 going = 0;
+u8 stopped = 1;
+long last_tick = 0;
+i8 trim = 0;
+u8 last_cm = 0;
 
 void setup()
 {
@@ -52,11 +58,6 @@ void setup()
     ringbuff_init(&in_ring, inbuf, QUEUE_SIZE);
     ringbuff_init(&out_ring, outbuf, QUEUE_SIZE);
 }
-
-u8 going = 0;
-u8 stopped = 1;
-long last_tick = 0;
-i8 trim = -30;
 
 void stop_motor() {
     stopped = 1;
@@ -85,6 +86,7 @@ void go_left() {
     analogWrite(enB, 200);
 
 }
+
 void loop()
 {
 
@@ -109,10 +111,13 @@ void loop()
             digitalWrite(LED_BUILTIN,LOW);
             should_go = 1;
         }
+        if(distance != last_cm) {
         BTSerial.print(distance);
         BTSerial.println(" cm");
         Serial.print(distance);
         Serial.println(" cm");
+        last_cm = distance;
+        }
     }
     int next_char = BTSerial.read();
     if( next_char == 'S' ) {
